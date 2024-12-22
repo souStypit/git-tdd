@@ -1,0 +1,6 @@
+.venv
+.pytest_cache
+report.html
+assets
+*__pycache__
+app/instance
