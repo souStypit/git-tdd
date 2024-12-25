@@ -64,6 +64,9 @@ def create_user():
                     login=data['login'], 
                     password=data['password'])
     
+    if new_user.email is None or new_user.login is None:
+        return abort(404)
+    
     # Check for unique value
     for user in User.query.all():
         if new_user.email in user.email:
@@ -71,11 +74,45 @@ def create_user():
         
         if new_user.login in user.login:
             return abort(404)
-        
+    
     db.session.add(new_user)
     db.session.commit()
 
     return jsonify({'message':'new user created'})
+
+# PUT-запросы
+
+@app.route('/users/<int:id>', methods=['PUT'])
+def update_user(id):
+    user = User.query.get(id)
+
+    if not user:
+        return jsonify({'message': 'User has not been found'}), 404
+    
+    data = request.json
+    if 'login' in data:
+        user.login = data['login']
+    if 'email' in data:
+        user.email = data['email']
+    if 'password' in data:
+        user.password = data['password']
+
+    db.session.commit()
+
+    return jsonify(user.to_json())
+
+
+@app.route('/users/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    user = User.query.get(id)
+
+    if user is None:
+        return jsonify({'message': 'user has not been found'}), 404
+    
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify(User.query.get(id)), 200
 
 
 if __name__ == '__main__':

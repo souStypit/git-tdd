@@ -114,29 +114,56 @@ def test_create_user_non_unique_data(client):
 
     result = client.post('/users', json=data)
     assert result.status_code == 404
-# def test_create_user_successfully(self):
-#     with t_app.app_context():
-#        payload = {
-#            'email': 'new_test@example.com',
-#            'login': 'new_test_login',
-#            'password': '54321'
-#        }
-#        with app.test_client() as client:
-#            result = client.post('/users', json=payload)
-#            assert result.status_code == 201
-#            new_user = User.query.filter_by(login='new_test_login').first()
-#            assert new_user is not None
-#            assert new_user.email == 'new_test@example.com'
-#            assert new_user.login == 'new_test_login'
-#            assert new_user.password == '54321'
-   
-# def test_create_user_missing_fields(self):
-#     payload = {
-#         'email': 'missing_field@example.com',
-#         'password': '654321'
-#     }
-#     with app.test_client() as client:
-#         result = client.post('/users', json=payload)
-#         self.assertEqual(result.status_code, 400)
-#         error_message = json.loads(result.data)['message']
-#         self.assertIn('Missing required fields', error_message)
+
+
+def test_create_user_missing_field(client):
+    data = {
+        'email': None,
+        'login': 'testlogin',
+        'password': '12345'
+    }
+
+    result = client.post('/users', json=data)
+    assert result.status_code == 404
+
+
+def test_change_user_status_code(client):
+    id = 1
+    result = client.put(f'/users/{id}', json={'id': id})
+    assert result.status_code == 200
+    
+
+def test_change_user_data(client):
+    id = 1
+    data = {
+        'id': id,
+        'email': 'test@example.com',
+        'login': 'test_new_login'
+    }
+
+    client.put(f'/users/{id}', json=data)
+    result = client.get(f'/users/{id}')
+    assert json.loads(result.data) == data
+    
+
+def test_change_user_no_data(client):
+    id = 40
+    result = client.put(f'/users/{id}', json={'id': id})
+    assert result.status_code == 404
+
+
+def test_delete_user(client, db):
+    user = User(email='test@example.com', login='test_login', password='12345')
+    db.session.add(user)
+    db.session.commit()
+
+    id = 1
+    result = client.delete(f'/users/{id}', json={'id': id})
+    assert result.status_code == 200
+    assert json.loads(result.data) is None
+    
+
+def test_delete_user_not_exists(client, db):
+    id = 1
+    result = client.delete(f'/users/{id}', json={'id': id})
+    assert result.status_code == 404
